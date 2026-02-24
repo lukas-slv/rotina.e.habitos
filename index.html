@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DailyFlow - Rotinas & Hábitos</title>
-    <link rel="shortcut icon" href="icone/user-fast-running.png.nv.png" type="image/x-icon">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #6b66cee0;
-            --primary-hover: #5a52d5;
+            --primary: #6C63FF;
             --bg: #f4f4f9;
             --surface: #ffffff;
             --text: #333333;
@@ -73,13 +71,36 @@
             height: 40px;
             cursor: pointer;
             font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
         }
 
-        .theme-btn:hover { background: var(--border); }
+        /* Categorias */
+        .categories {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .category-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .category-btn:hover { transform: scale(1.05); }
+        .category-btn.active { box-shadow: 0 0 0 2px var(--text); }
+
+        /* Cores das categorias */
+        .cat-saude { background: #00b894; color: white; }
+        .cat-trabalho { background: #6c5ce7; color: white; }
+        .cat-estudos { background: #fdcb6e; color: #333; }
+        .cat-pessoal { background: #e17055; color: white; }
+        .cat-fitness { background: #00cec9; color: white; }
+        .cat-todos { background: #636e72; color: white; }
 
         .date-display {
             text-align: center;
@@ -105,8 +126,6 @@
             height: 25px;
             width: 100%;
             margin-bottom: 25px;
-            overflow: hidden;
-            position: relative;
         }
 
         .progress-bar {
@@ -129,6 +148,7 @@
             background: var(--bg);
             padding: 10px;
             border-radius: 12px;
+            flex-wrap: wrap;
         }
 
         input[type="text"] {
@@ -139,6 +159,17 @@
             color: var(--text);
             font-size: 16px;
             outline: none;
+            min-width: 150px;
+        }
+
+        select {
+            padding: 10px;
+            border: none;
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
         }
 
         button#add-btn {
@@ -149,10 +180,7 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.2s;
         }
-
-        button#add-btn:hover { background-color: var(--primary-hover); }
 
         ul { list-style: none; }
 
@@ -164,10 +192,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: transform 0.2s;
+            border-left: 4px solid var(--primary);
         }
-
-        li:active { transform: scale(0.98); }
 
         .habit-content {
             display: flex;
@@ -175,6 +201,13 @@
             gap: 15px;
             cursor: pointer;
             flex-grow: 1;
+        }
+
+        .cat-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 5px;
         }
 
         .checkbox {
@@ -185,7 +218,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
         }
 
         .checkbox::after {
@@ -202,11 +234,6 @@
 
         li.completed .checkbox::after { display: block; }
 
-        .habit-text {
-            font-size: 1rem;
-            transition: 0.2s;
-        }
-
         li.completed .habit-text {
             text-decoration: line-through;
             color: var(--text-secondary);
@@ -218,11 +245,7 @@
             color: var(--danger);
             cursor: pointer;
             font-size: 1.2rem;
-            padding: 5px;
-            opacity: 0.6;
         }
-
-        .delete-btn:hover { opacity: 1; }
 
         .stats-section {
             margin-top: 30px;
@@ -233,16 +256,11 @@
         .stats-title {
             font-size: 1.1rem;
             margin-bottom: 15px;
-            color: var(--text);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .chart-container {
             position: relative;
             height: 200px;
-            width: 100%;
         }
 
         .controls {
@@ -259,23 +277,13 @@
             font-size: 0.85rem;
             text-decoration: underline;
         }
-        
-        .notification-btn {
-            background: var(--surface);
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-        }
 
-        .notification-btn.active {
-            background: var(--primary);
-            color: white;
-        }
+        /* Cores de borda por categoria */
+        li[data-cat="saude"] { border-left-color: #00b894; }
+        li[data-cat="trabalho"] { border-left-color: #6c5ce7; }
+        li[data-cat="estudos"] { border-left-color: #fdcb6e; }
+        li[data-cat="pessoal"] { border-left-color: #e17055; }
+        li[data-cat="fitness"] { border-left-color: #00cec9; }
     </style>
 </head>
 <body>
@@ -291,6 +299,16 @@
         <div style="text-align: center;">
             <span class="level-badge" id="level-badge">Nível 1 - Iniciante</span>
         </div>
+
+        <!-- Categorias para filtrar -->
+        <div class="categories">
+            <button class="category-btn cat-todos active" onclick="filterCategory('todos')">Todos</button>
+            <button class="category-btn cat-saude" onclick="filterCategory('saude')">💪 Saúde</button>
+            <button class="category-btn cat-trabalho" onclick="filterCategory('trabalho')">💼 Trabalho</button>
+            <button class="category-btn cat-estudos" onclick="filterCategory('estudos')">📚 Estudos</button>
+            <button class="category-btn cat-fitness" onclick="filterCategory('fitness')">🏃 Fitness</button>
+            <button class="category-btn cat-pessoal" onclick="filterCategory('pessoal')">🏠 Pessoal</button>
+        </div>
         
         <div class="progress-container">
             <div class="progress-bar" id="progress-bar">0%</div>
@@ -298,7 +316,14 @@
 
         <div class="input-group">
             <input type="text" id="habit-input" placeholder="Adicionar novo hábito...">
-            <button id="add-btn">+</button>
+            <select id="category-select">
+                <option value="saude">💪 Saúde</option>
+                <option value="trabalho">💼 Trabalho</option>
+                <option value="estudos">📚 Estudos</option>
+                <option value="fitness">🏃 Fitness</option>
+                <option value="pessoal">🏠 Pessoal</option>
+            </select>
+            <button id="add-btn" onclick="addHabit()">+</button>
         </div>
 
         <ul id="habit-list"></ul>
@@ -308,15 +333,8 @@
             <button class="control-btn" onclick="clearAll()">Limpar Tudo</button>
         </div>
 
-        <button class="notification-btn" id="notif-btn" onclick="toggleNotifications()">
-            🔔 Ativar Lembretes
-        </button>
-
         <div class="stats-section">
-            <div class="stats-title">
-                <span>Evolução Semanal</span>
-                <span style="font-size: 0.8rem; color: var(--text-secondary)">Últimos 7 dias</span>
-            </div>
+            <div class="stats-title">📊 Evolução por Categoria</div>
             <div class="chart-container">
                 <canvas id="statsChart"></canvas>
             </div>
@@ -332,16 +350,26 @@
         const dateDisplay = document.getElementById('date-display');
         const levelBadge = document.getElementById('level-badge');
         const themeBtn = document.getElementById('theme-btn');
-        const notifBtn = document.getElementById('notif-btn');
+        const categorySelect = document.getElementById('category-select');
 
         // Carregar dados do LocalStorage
         let habits = JSON.parse(localStorage.getItem('habits')) || [];
         let darkMode = JSON.parse(localStorage.getItem('darkMode')) || false;
-        let notificationsEnabled = JSON.parse(localStorage.getItem('notifications')) || false;
+        let currentFilter = 'todos';
+
+        // Cores das categorias
+        const categoryColors = {
+            saude: '#00b894',
+            trabalho: '#6c5ce7',
+            estudos: '#fdcb6e',
+            fitness: '#00cec9',
+            pessoal: '#e17055'
+        };
 
         // Data Atual
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        dateDisplay.innerText = new Date().toLocaleDateString('pt-BR', options);
+        dateDisplay.innerText = new Date().toLocaleDateString('pt-BR', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
 
         // Inicializar Tema
         if (darkMode) {
@@ -349,18 +377,20 @@
             themeBtn.innerText = '☀️';
         }
 
-        // Atualizar botão de notificação
-        updateNotifButton();
-
         // --- Gráficos (Chart.js) ---
         let chartInstance = null;
 
         function initChart() {
             const ctx = document.getElementById('statsChart').getContext('2d');
             
-            // Preparar dados dos últimos 7 dias
-            const labels = getLast7Days();
-            const data = getHistoryData();
+            // Dados por categoria
+            const labels = ['Saúde', 'Trabalho', 'Estudos', 'Fitness', 'Pessoal'];
+            const data = labels.map(cat => {
+                const catHabits = habits.filter(h => h.category === cat.toLowerCase());
+                if (catHabits.length === 0) return 0;
+                const completed = catHabits.filter(h => h.completed).length;
+                return Math.round((completed / catHabits.length) * 100);
+            });
 
             const chartConfig = {
                 type: 'bar',
@@ -369,26 +399,17 @@
                     datasets: [{
                         label: '% Concluído',
                         data: data,
-                        backgroundColor: darkMode ? '#6C63FF' : '#6C63FF',
-                        borderRadius: 5,
+                        backgroundColor: Object.values(categoryColors),
+                        borderRadius: 8,
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: { color: darkMode ? '#2a2a40' : '#eee' }
-                        },
-                        x: {
-                            grid: { display: false }
-                        }
+                        y: { beginAtZero: true, max: 100 }
                     },
-                    plugins: {
-                        legend: { display: false }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             };
 
@@ -396,71 +417,79 @@
             chartInstance = new Chart(ctx, chartConfig);
         }
 
-        function getLast7Days() {
-            const days = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                days.push(d.toLocaleDateString('pt-BR', { weekday: 'short' }));
-            }
-            return days;
-        }
-
-        function getHistoryData() {
-            // Gera dados simulados baseados em dias anteriores
-            // Em produção, você salvaria isso no LocalStorage
-            const data = [];
-            for (let i = 0; i < 7; i++) {
-                if (i === 6) {
-                    // Hoje - calcula baseado no progresso atual
-                    const percent = habits.length > 0 
-                        ? Math.round((habits.filter(h => h.completed).length / habits.length) * 100) 
-                        : 0;
-                    data.push(percent);
-                } else {
-                    // Dias anteriores - gera número aleatório para exemplo
-                    data.push(Math.floor(Math.random() * 60) + 40);
-                }
-            }
-            return data;
-        }
-
         // --- Funções Principais ---
 
         function saveLocal() {
             localStorage.setItem('habits', JSON.stringify(habits));
             localStorage.setItem('darkMode', JSON.stringify(darkMode));
-            localStorage.setItem('notifications', JSON.stringify(notificationsEnabled));
             updateProgress();
             updateLevel();
         }
 
+        function filterCategory(cat) {
+            currentFilter = cat;
+            
+            // Atualizar botões ativos
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderHabits();
+        }
+
         function renderHabits() {
             list.innerHTML = '';
-            habits.forEach((habit, index) => {
+            
+            // Filtrar hábitos
+            const filteredHabits = currentFilter === 'todos' 
+                ? habits 
+                : habits.filter(h => h.category === currentFilter);
+
+            filteredHabits.forEach((habit, index) => {
                 const li = document.createElement('li');
+                li.setAttribute('data-cat', habit.category);
                 if (habit.completed) li.classList.add('completed');
 
+                // Encontrar índice real no array original
+                const realIndex = habits.indexOf(habit);
+
                 li.innerHTML = `
-                    <div class="habit-content" onclick="toggleHabit(${index})">
+                    <div class="habit-content" onclick="toggleHabit(${realIndex})">
                         <div class="checkbox"></div>
                         <span class="habit-text">${habit.text}</span>
+                        <span class="cat-badge" style="background:${categoryColors[habit.category]}; color: white;">
+                            ${getCategoryLabel(habit.category)}
+                        </span>
                     </div>
-                    <button class="delete-btn" onclick="deleteHabit(${index})">&times;</button>
+                    <button class="delete-btn" onclick="deleteHabit(${realIndex})">&times;</button>
                 `;
                 list.appendChild(li);
             });
             updateProgress();
         }
 
+        function getCategoryLabel(cat) {
+            const labels = {
+                saude: 'Saúde',
+                trabalho: 'Trabalho',
+                estudos: 'Estudos',
+                fitness: 'Fitness',
+                pessoal: 'Pessoal'
+            };
+            return labels[cat] || cat;
+        }
+
         function addHabit() {
             const text = input.value.trim();
+            const category = categorySelect.value;
+            
             if (text !== '') {
-                habits.push({ text: text, completed: false });
+                habits.push({ text: text, category: category, completed: false });
                 input.value = '';
                 saveLocal();
                 renderHabits();
-                initChart(); // Atualiza gráfico
+                initChart();
             }
         }
 
@@ -468,36 +497,55 @@
             habits[index].completed = !habits[index].completed;
             saveLocal();
             renderHabits();
-            initChart(); // Atualiza gráfico
+            initChart();
         }
 
         function deleteHabit(index) {
             habits.splice(index, 1);
             saveLocal();
             renderHabits();
-            initChart(); // Atualiza gráfico
+            initChart();
         }
 
         function updateProgress() {
-            if (habits.length === 0) {
+            const filteredHabits = currentFilter === 'todos' 
+                ? habits 
+                : habits.filter(h => h.category === currentFilter);
+
+            if (filteredHabits.length === 0) {
                 progressBar.style.width = '0%';
                 progressBar.innerText = '0%';
                 return;
             }
-            const completedCount = habits.filter(h => h.completed).length;
-            const percentage = Math.round((completedCount / habits.length) * 100);
+            const completedCount = filteredHabits.filter(h => h.completed).length;
+            const percentage = Math.round((completedCount / filteredHabits.length) * 100);
+            
             progressBar.style.width = percentage + '%';
             progressBar.innerText = percentage + '%';
         }
-        
+
         function updateLevel() {
-            const percentage = habits.length === 0 ? 0 : Math.round((habits.filter(h => h.completed).length / habits.length) * 100);
-            let level = 'Nível 1 - Iniciante';
-            if (percentage >= 80) level = 'Nível 5 - Mestre';
-            else if (percentage >= 60) level = 'Nível 4 - Avançado';
-            else if (percentage >= 40) level = 'Nível 3 - Intermediário';
-            else if (percentage >= 20) level = 'Nível 2 - Aprendiz';
-            levelBadge.innerText = level;
+            let totalDiasPerfeitos = JSON.parse(localStorage.getItem('diasPerfeitos')) || 0;
+            
+            const completedCount = habits.filter(h => h.completed).length;
+            if (habits.length > 0 && completedCount === habits.length) {
+                const hoje = new Date().toDateString();
+                if (localStorage.getItem('ultimoDiaPerfeito') !== hoje) {
+                    totalDiasPerfeitos++;
+                    localStorage.setItem('diasPerfeitos', JSON.stringify(totalDiasPerfeitos));
+                    localStorage.setItem('ultimoDiaPerfeito', hoje);
+                }
+            }
+
+            let nivel = 1;
+            let titulo = "Iniciante";
+            
+            if (totalDiasPerfeitos >= 3) { nivel = 2; titulo = "Consistente"; }
+            if (totalDiasPerfeitos >= 7) { nivel = 3; titulo = "Disciplinado"; }
+            if (totalDiasPerfeitos >= 15) { nivel = 4; titulo = "Mestre"; }
+            if (totalDiasPerfeitos >= 30) { nivel = 5; titulo = "Lendário"; }
+
+            levelBadge.innerText = `Nível ${nivel} - ${titulo}`;
         }
 
         function toggleTheme() {
@@ -506,26 +554,6 @@
             themeBtn.innerText = darkMode ? '☀️' : '🌙';
             localStorage.setItem('darkMode', JSON.stringify(darkMode));
             initChart();
-        }
-
-        function toggleNotifications() {
-            notificationsEnabled = !notificationsEnabled;
-            localStorage.setItem('notifications', JSON.stringify(notificationsEnabled));
-            updateNotifButton();
-            if (notificationsEnabled && 'Notification' in window && Notification.permission !== 'granted') {
-                Notification.requestPermission();
-            }
-        }
-
-        function updateNotifButton() {
-            if (!notifBtn) return;
-            if (notificationsEnabled) {
-                notifBtn.classList.add('active');
-                notifBtn.innerText = '🔕 Desativar Lembretes';
-            } else {
-                notifBtn.classList.remove('active');
-                notifBtn.innerText = '🔔 Ativar Lembretes';
-            }
         }
 
         function resetDay() {
@@ -538,20 +566,21 @@
         function clearAll() {
             if (!confirm('Deseja realmente limpar todos os hábitos?')) return;
             habits = [];
+            localStorage.setItem('diasPerfeitos', JSON.stringify(0));
+            localStorage.setItem('ultimoDiaPerfeito', '');
             saveLocal();
             renderHabits();
             initChart();
         }
 
-        // Listeners
+        // --- Listeners ---
         addBtn.addEventListener('click', addHabit);
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') addHabit(); });
 
-        // Inicialização
+        // --- Renderizar Inicial ---
         renderHabits();
         updateLevel();
         initChart();
-        updateNotifButton();
     </script>
 </body>
 </html>
