@@ -303,12 +303,12 @@
 
         <!-- Categorias para filtrar -->
         <div class="categories">
-            <button class="category-btn cat-todos active" onclick="filterCategory('todos')">Todos</button>
-            <button class="category-btn cat-saude" onclick="filterCategory('saude')">💪 Saúde</button>
-            <button class="category-btn cat-trabalho" onclick="filterCategory('trabalho')">💼 Trabalho</button>
-            <button class="category-btn cat-estudos" onclick="filterCategory('estudos')">📚 Estudos</button>
-            <button class="category-btn cat-fitness" onclick="filterCategory('fitness')">🏃 Fitness</button>
-            <button class="category-btn cat-pessoal" onclick="filterCategory('pessoal')">🏠 Pessoal</button>
+            <button class="category-btn cat-todos active" onclick="filterCategory('todos', this)">Todos</button>
+            <button class="category-btn cat-saude" onclick="filterCategory('saude', this)">💪 Saúde</button>
+            <button class="category-btn cat-trabalho" onclick="filterCategory('trabalho', this)">💼 Trabalho</button>
+            <button class="category-btn cat-estudos" onclick="filterCategory('estudos', this)">📚 Estudos</button>
+            <button class="category-btn cat-fitness" onclick="filterCategory('fitness', this)">🏃 Fitness</button>
+            <button class="category-btn cat-pessoal" onclick="filterCategory('pessoal', this)">🏠 Pessoal</button>
         </div>
         
         <div class="progress-container">
@@ -427,16 +427,15 @@
             updateLevel();
         }
 
-        function filterCategory(cat) {
+        function filterCategory(cat, btn) {
             currentFilter = cat;
             
             // Atualizar botões ativos
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
             
             renderHabits();
+            initChart(); // update chart when filter changes
         }
 
         function renderHabits() {
