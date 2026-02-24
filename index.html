@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DailyFlow - Rotinas & Hábitos</title>
+    <link rel="shortcut icon" href="icone/user-fast-running.png.nv.png" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6b66cee0;
+            --primary-hover: #5a52d5;
+            --bg: #f4f4f9;
+            --surface: #ffffff;
+            --text: #333333;
+            --text-secondary: #666666;
+            --border: #e0e0e0;
+            --success: #00b894;
+            --danger: #ff7675;
+            --shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #eaeaea;
+            --text-secondary: #a0a0a0;
+            --border: #2a2a40;
+            --shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            background: var(--surface);
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            transition: background 0.3s;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .theme-btn {
+            background: none;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .theme-btn:hover { background: var(--border); }
+
+        .date-display {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .level-badge {
+            text-align: center;
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .progress-container {
+            background-color: var(--border);
+            border-radius: 20px;
+            height: 25px;
+            width: 100%;
+            margin-bottom: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary), #a29bfe);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--bg);
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 16px;
+            outline: none;
+        }
+
+        button#add-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button#add-btn:hover { background-color: var(--primary-hover); }
+
+        ul { list-style: none; }
+
+        li {
+            background: var(--bg);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+
+        li:active { transform: scale(0.98); }
+
+        .habit-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            flex-grow: 1;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            display: none;
+        }
+
+        li.completed .checkbox {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        li.completed .checkbox::after { display: block; }
+
+        .habit-text {
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        li.completed .habit-text {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            opacity: 0.6;
+        }
+
+        .delete-btn:hover { opacity: 1; }
+
+        .stats-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border);
+        }
+
+        .stats-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-decoration: underline;
+        }
+        
+        .notification-btn {
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .notification-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">DailyFlow</div>
+            <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+        </div>
+
+        <div class="date-display" id="date-display"></div>
+        
+        <div style="text-align: center;">
+            <span class="level-badge" id="level-badge">Nível 1 - Iniciante</span>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">0%</div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="habit-input" placeholder="Adicionar novo hábito...">
+            <button id="add-btn">+</button>
+        </div>
+
+        <ul id="habit-list"></ul>
+
+        <div class="controls">
+            <button class="control-btn" onclick="resetDay()">Resetar Checks</button>
+            <button class="control-btn" onclick="clearAll()">Limpar Tudo</button>
+        </div>
+
+        <button class="notification-btn" id="notif-btn" onclick="toggleNotifications()">
+            🔔 Ativar Lembretes
+        </button>
+
+        <div class="stats-section">
+            <div class="stats-title">
+                <span>Evolução Semanal</span>
+                <span style="font-size: 0.8rem; color: var(--text-secondary)">Últimos 7 dias</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="statsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos do DOM
+        const input = document.getElementById('habit-input');
+        const addBtn = document.getElementById('add-btn');
+        const list = document.getElementById('habit-list');
+        const progressBar = document.getElementById('progress-bar');
+        const dateDisplay = document.getElementById('date-display');
+        const levelBadge = document.getElementById('level-badge');
+        const themeBtn = document.getElementById('theme-btn');
+        const notifBtn = document.getElementById('notif-btn');
+
+        // Carregar dados do LocalStorage
+        let habits = JSON.parse(localStorage.getItem('habits')) || [];
+        let darkMode = JSON.parse(localStorage.getItem('darkMode')) || false;
+        let notificationsEnabled = JSON.parse(localStorage.getItem('notifications')) || false;
+
+        // Data Atual
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateDisplay.innerText = new Date().toLocaleDateString('pt-BR', options);
+
+        // Inicializar Tema
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+            themeBtn.innerText = '☀️';
+        }
+
+        // Atualizar botão de notificação
+        updateNotifButton();
+
+        // --- Gráficos (Chart.js) ---
+        let chartInstance = null;
+
+        function initChart() {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            // Preparar dados dos últimos 7 dias
+            const labels = getLast7Days();
+            const data = getHistoryData();
+
+            const chartConfig = {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '% Concluído',
+                        data: data,
+                        backgroundColor: darkMode ? '#6C63FF' : '#6C63FF',
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: darkMode ? '#2a2a40' : '#eee' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            };
+
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, chartConfig);
+        }
+
+        function getLast7Days() {
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                days.push(d.toLocaleDateString('pt-BR', { weekday: 'short' }));
+            }
+            return days;
+        }
+
+        function getHistoryData() {
+            // Gera dados simulados baseados em dias anteriores
+            // Em produção, você salvaria isso no LocalStorage
+            const data = [];
+            for (let i = 0; i < 7; i++) {
+                if (i === 6) {
+                    // Hoje - calcula baseado no progresso atual
+                    const percent = habits.length > 0 
+                        ? Math.round((habits.filter(h => h.completed).length / habits.length) * 100) 
+                        : 0;
+                    data.push(percent);
+                } else {
+                    // Dias anteriores - gera número aleatório para exemplo
+                    data.push(Math.floor(Math.random() * 60) + 40);
+                }
+            }
+            return data;
+        }
+
+        // --- Funções Principais ---
+
+        function saveLocal() {
+            localStorage.setItem('habits', JSON.stringify(habits));
+            localStorage.setItem('darkMode', JSON.stringify(darkMode));
+            localStorage.setItem('notifications', JSON.stringify(notificationsEnabled));
+            updateProgress();
+            updateLevel();
+        }
+
+        function renderHabits() {
+            list.innerHTML = '';
+            habits.forEach((habit, index) => {
+                const li = document.createElement('li');
+                if (habit.completed) li.classList.add('completed');
+
+                li.innerHTML = `
+                    <div class="habit-content" onclick="toggleHabit(${index})">
+                        <div class="checkbox"></div>
+                        <span class="habit-text">${habit.text}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteHabit(${index})">&times;</button>
+                `;
+                list.appendChild(li);
+            });
+            updateProgress();
+        }
+
+        function addHabit() {
+            const text = input.value.trim();
+            if (text !== '') {
+                habits.push({ text: text, completed: false });
+                input.value = '';
+                saveLocal();
+                renderHabits();
+                initChart(); // Atualiza gráfico
+            }
+        }
+
+        function toggleHabit(index) {
+            habits[index].completed = !habits[index].completed;
+            saveLocal();
+            renderHabits();
+            initChart(); // Atualiza gráfico
+        }
+
+        function deleteHabit(index) {
+            habits.splice(index, 1);
+            saveLocal();
+            renderHabits();
+            initChart(); // Atualiza gráfico
+        }
+
+        function updateProgress() {
+            if (habits.length === 0) {
+                progressBar.style.width = '0%';
+                progressBar.innerText = '0%';
+                return;
+            }
+            const completedCount = habits.filter(h => h.completed).length;
+            const percentage = Math.round((completedCount / habits.length) * 100);
+            progressBar.style.width = percentage + '%';
+            progressBar.innerText = percentage + '%';
+        }
+        
+        function updateLevel() {
+            const percentage = habits.length === 0 ? 0 : Math.round((habits.filter(h => h.completed).length / habits.length) * 100);
+            let level = 'Nível 1 - Iniciante';
+            if (percentage >= 80) level = 'Nível 5 - Mestre';
+            else if (percentage >= 60) level = 'Nível 4 - Avançado';
+            else if (percentage >= 40) level = 'Nível 3 - Intermediário';
+            else if (percentage >= 20) level = 'Nível 2 - Aprendiz';
+            levelBadge.innerText = level;
+        }
+
+        function toggleTheme() {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode', darkMode);
+            themeBtn.innerText = darkMode ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', JSON.stringify(darkMode));
+            initChart();
+        }
+
+        function toggleNotifications() {
+            notificationsEnabled = !notificationsEnabled;
+            localStorage.setItem('notifications', JSON.stringify(notificationsEnabled));
+            updateNotifButton();
+            if (notificationsEnabled && 'Notification' in window && Notification.permission !== 'granted') {
+                Notification.requestPermission();
+            }
+        }
+
+        function updateNotifButton() {
+            if (!notifBtn) return;
+            if (notificationsEnabled) {
+                notifBtn.classList.add('active');
+                notifBtn.innerText = '🔕 Desativar Lembretes';
+            } else {
+                notifBtn.classList.remove('active');
+                notifBtn.innerText = '🔔 Ativar Lembretes';
+            }
+        }
+
+        function resetDay() {
+            habits = habits.map(h => ({ ...h, completed: false }));
+            saveLocal();
+            renderHabits();
+            initChart();
+        }
+
+        function clearAll() {
+            if (!confirm('Deseja realmente limpar todos os hábitos?')) return;
+            habits = [];
+            saveLocal();
+            renderHabits();
+            initChart();
+        }
+
+        // Listeners
+        addBtn.addEventListener('click', addHabit);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') addHabit(); });
+
+        // Inicialização
+        renderHabits();
+        updateLevel();
+        initChart();
+        updateNotifButton();
+    </script>
+</body>
+</html>
